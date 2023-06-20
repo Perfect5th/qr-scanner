@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>QR scan from clipboard</title>
+    <style type="text/css" media="screen"></style>
+  </head>
+  <body>
+    <button id="scan" type="button">Read QR from clipboard</button>
+    <div id="output"></div>
+    <noscript>This page is basically only JavaScript, so if you have that turned off go back into your cave, please.</noscript>
+    <script type="module">
+import QrScanner from "./qr-scanner.min.js";
+
+window.addEventListener("DOMContentLoaded", () => {
+    const button = document.querySelector("#scan");
+    const body = document.querySelector("#output");
+
+    button.addEventListener("click", async () => {
+        try {
+            const permission = await navigator.permissions.query({
+                name: "clipboard-read",
+            });
+
+            if (permission.state === "denied") {
+                throw new Error("Not allowed to read clipboard.");
+            }
+
+            const clipboardContents = await navigator.clipboard.read();
+
+            for (const item of clipboardContents) {
+                if (!item.types.includes("image/png")) {
+                    continue;
+                }
+
+                const blob = await item.getType("image/png");
+
+                try {
+                    const result = await QrScanner.scanImage(blob);
+                    const outputP = document.createElement("p");
+                    outputP.innerText = result;
+                    body.append(outputP);
+                } catch (error) {
+                    console.error(error.message);
+                }
+            }
+        } catch (error) {
+            console.error(error.message);
+        }
+
+        const image = navigator.clipboard.read()
+
+        QrScanner.scanImage()
+    });
+});
+    </script>
+  </body>
+</html>
